@@ -73,6 +73,17 @@ public class UserService {
          * store for the user. 
          */
         void deletePendingActivations();
+        
+        
+        /**
+         * 
+         */
+        void onLogin();
+        
+        /**
+         * 
+         */
+        void onLogout();
     }
 
     private static Service service;
