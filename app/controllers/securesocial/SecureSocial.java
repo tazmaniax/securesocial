@@ -152,6 +152,7 @@ public class SecureSocial extends Controller {
     public static void login() {
         final Collection providers = ProviderRegistry.all();
         flash.keep(ORIGINAL_URL);
+        UserService.onLogin();
         boolean userPassEnabled = ProviderRegistry.get(ProviderType.userpass) != null;
         render(providers, userPassEnabled);
 
@@ -162,6 +163,7 @@ public class SecureSocial extends Controller {
      */
     public static void logout() {
         clearUserId();
+        UserService.onLogout();
         final String redirectTo = Play.configuration.getProperty(SECURESOCIAL_LOGOUT_REDIRECT, SECURESOCIAL_SECURE_SOCIAL_LOGIN);
         redirect(redirectTo);
     }
