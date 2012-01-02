@@ -68,4 +68,12 @@ public class DefaultUserService implements UserService.Service {
     public void deletePendingActivations() {
         activations.clear();
     }
+    
+    public void onLogin() {
+        // Do nothing.
+    }
+    
+    public void onLogout() {
+        // Do nothing.
+    }
 }
