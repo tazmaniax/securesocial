@@ -1,5 +1,6 @@
 /**
-* Copyright 2011 Jorge Aliss (jaliss at gmail dot com) - twitter: @jaliss
+* Copyright 2011 Jorge Aliss (jaliss at gmail dot com) - twitter: @jaliss and
+*                Francis De Brabandere - twitter: @somatik 
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -14,35 +15,36 @@
 * limitations under the License.
 *
 */
-package securesocial.jobs;
+package securesocial.plugin;
+
+import java.lang.reflect.Modifier;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import play.Logger;
 import play.Play;
-import play.jobs.Job;
-import play.jobs.OnApplicationStart;
-import securesocial.provider.*;
+import play.PlayPlugin;
+import securesocial.provider.DefaultUserService;
+import securesocial.provider.IdentityProvider;
+import securesocial.provider.ProviderRegistry;
+import securesocial.provider.ProviderType;
+import securesocial.provider.UserService;
 
-import java.lang.reflect.Modifier;
-import java.util.*;
-
-/**
- * A Job to load the providers and set the user service.
- */
-@OnApplicationStart
-public class Bootstrap extends Job {
+public class SecureSocialPlugin extends PlayPlugin {
     private static final String SECURESOCIAL_PROVIDERS = "securesocial.providers";
     private static final String SEPARATOR = ",";
     private static final String SECURESOCIAL = "securesocial";
 
     @Override
-    public void doJob() throws Exception {
-        // register providers
+    public void onApplicationStart() {
+    	// register providers
         final List<Class> providers = Play.classloader.getAssignableClasses(IdentityProvider.class);        
         if ( providers.size() > 0 ) {
             Map<ProviderType, IdentityProvider> availableProviders = new LinkedHashMap<ProviderType, IdentityProvider>();
             for( Class clazz : providers ) {
                 if ( !Modifier.isAbstract(clazz.getModifiers()) ) {
-                    IdentityProvider provider = (IdentityProvider) clazz.newInstance();
+                    IdentityProvider provider = (IdentityProvider) newInstance(clazz);
                         availableProviders.put(provider.type, provider);
                 }
             }
@@ -82,12 +84,22 @@ public class Bootstrap extends Job {
             if ( clazz.getName().startsWith(SECURESOCIAL) ) {
                 clazz = classes.get(1);
             }
-            service = (UserService.Service) clazz.newInstance();
+            service = (UserService.Service) newInstance(clazz);
             Logger.info("Using custom user service: %s", service.getClass());
         } else {
             // should not happen unless someone implements the interface more than once.
             Logger.fatal("More than one custom UserService was found.  Unable to initialize.");
         }
         UserService.setService(service);
+    }
+    
+    private Object newInstance(Class<?> cls){
+        try {
+            return cls.newInstance();
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+        	throw new RuntimeException(e);
+        }
     }
 }
