@@ -17,6 +17,7 @@
 package securesocial.provider;
 
 import play.libs.Codec;
+import securesocial.utils.SecureSocialPasswordHasher;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,4 +110,16 @@ public class DefaultUserService implements UserServiceDelegate {
     public void deletePendingActivations() {
         activations.clear();
     }
+    
+    public void onLogin() {
+        // Do nothing.
+    }
+    
+    public void onLogout() {
+        // Do nothing.
+    }
+
+	public boolean isPasswordMatch(String password, String userPassword) {
+		return SecureSocialPasswordHasher.verifyPasswordHash(password, userPassword);
+	}
 }

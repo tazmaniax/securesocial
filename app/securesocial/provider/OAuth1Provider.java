@@ -92,7 +92,7 @@ public abstract class OAuth1Provider extends IdentityProvider {
             SocialUser user = createUser();
             user.token = response.token;
             user.secret = response.secret;
-            Cache.add(key, user);
+            Cache.safeSet(key, user, "30mn");
             throw new Redirect( service.redirectUrl(response.token), false);
         }
 

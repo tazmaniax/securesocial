@@ -20,14 +20,29 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import controllers.securesocial.SecureSocial;
+
+import play.Play;
+import play.cache.Cache;
+import play.mvc.Router;
+import play.mvc.Scope;
+import play.mvc.Http.Request;
+import play.mvc.Scope.Flash;
+import play.mvc.results.Redirect;
+
 /**
- * Base class for all itendity providers
+ * Base class for all identity providers
  */
 public abstract class IdentityProvider {
     /**
      * The provider ID.
      */
     public ProviderType type;
+    
+    /*
+     * External action to update user before saving.
+     */
+    public String action;
 
     /**
      * The authentication method used by this provider
@@ -48,6 +63,7 @@ public abstract class IdentityProvider {
     protected IdentityProvider(ProviderType type, AuthenticationMethod authMethod) {
         this.type = type;
         this.authMethod = authMethod;
+        this.action = Play.configuration.getProperty(getPropertiesKey(this.type) + "action");
     }
     
     @Override
@@ -62,12 +78,59 @@ public abstract class IdentityProvider {
      * @return A SocialUser if the user was authenticated properly
      */
     public SocialUser authenticate() {
-        // authenticate against the 3rd party service (facebook, twitter, etc)
-        Map<String, Object> authContext = new HashMap<String, Object>();
-        SocialUser user = doAuth(authContext);
-
-        // if user authenticated correctly, retrieve some profile information
-        fillProfile(user, authContext);
+    	SocialUser user = null;
+    	
+    	final String userKey = (this.action != null) ? new StringBuilder(SECURESOCIAL).append("extUser.").append(Scope.Session.current().getId()).toString() : null;
+    	SocialUser externalUser = (userKey != null) ? (SocialUser) Cache.get(userKey) : null;
+    	
+    	final String serviceInfoKey = (this.action != null) ? new StringBuilder(SECURESOCIAL).append("extServiceInfo.").append(Scope.Session.current().getId()).toString() : null;
+    	ServiceInfo serviceInfo  = (serviceInfoKey != null) ? (ServiceInfo) Cache.get(serviceInfoKey) : null;
+    	
+    	if (externalUser == null || externalUser.email == null) {
+	        // authenticate against the 3rd party service (facebook, twitter, etc)
+	        Map<String, Object> authContext = new HashMap<String, Object>();
+	        user = doAuth(authContext);
+	
+	        // if user authenticated correctly, retrieve some profile information
+	        fillProfile(user, authContext);
+	        
+	        if (this.action != null && user.email == null) {
+	        	// Check if the existing user .
+		        SocialUser existingUser = UserService.find(user.id);
+		        if (existingUser == null || existingUser.email == null) {
+		        	// play.lib.OAuth.ServiceInfo does not implement Serializable so it cannot
+		        	// be persisted to Memcached. Need to copy that data into a Serializable version
+		        	// and persisted separately.
+		        	if (user.serviceInfo != null) {
+			        	serviceInfo = new ServiceInfo(user.serviceInfo);
+			        	user.serviceInfo = null;
+			        	Cache.safeSet(serviceInfoKey, serviceInfo, "30mn");
+		        	}
+		        	
+		        	Cache.safeSet(userKey, user, "30mn");
+		        	
+		        	if (serviceInfo != null) {
+		        		serviceInfo.copyTo(user);
+		        	}
+		        	
+		        	Flash.current().keep(SecureSocial.ORIGINAL_URL);
+		        	Map<String, Object> args = new HashMap<String, Object>();
+		        	args.put("returnURL", Request.current().getBase() + Request.current().path);
+		        	args.put("key", userKey);
+		        	throw new Redirect(Router.getFullUrl(this.action, args));
+	        	}
+		        
+		        user.email = existingUser.email;
+	        }
+    	} else {
+    		Cache.delete(userKey);
+    		user = externalUser;
+    		
+    		if (serviceInfo != null) {
+    			Cache.delete(serviceInfoKey);
+    			serviceInfo.copyTo(user);
+    		}
+    	}
 
         // save the user
         user.lastAccess = new Date();

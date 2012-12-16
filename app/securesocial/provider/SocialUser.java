@@ -21,13 +21,25 @@ import play.libs.OAuth;
 import java.util.Date;
 
 /**
- * A class representing a conected user and its authentication details.
+ * A class representing a connected user and its authentication details.
  */
 public class SocialUser implements java.io.Serializable {
-    /**
+	private static final long serialVersionUID = 362619119838942012L;
+
+	/**
      * The user id
      */
     public UserId id;
+    
+    /**
+     * The user first name.
+     */
+    public String firstName;
+    
+    /**
+     * The user last name.
+     */
+    public String lastName;
 
     /**
      * The user full name.
@@ -84,7 +96,14 @@ public class SocialUser implements java.io.Serializable {
     public String password;
 
     /**
-     * A boolean indicating if the user has validated his email adddress (available when authMethod is USER_PASSWORD)
+     * A boolean indicating if the user has validated his email address (available when authMethod is USER_PASSWORD)
      */
     public boolean isEmailVerified;
+    
+    /**
+     * @return
+     */
+    public String getResolvedAvatarUrl() {
+    	return this.avatarUrl;
+    }
 }
