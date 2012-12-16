@@ -42,7 +42,7 @@ public class SecureSocial extends Controller {
 
     private static final String USER_COOKIE = "securesocial.user";
     private static final String NETWORK_COOKIE = "securesocial.network";
-    private static final String ORIGINAL_URL = "originalUrl";
+    public static final String ORIGINAL_URL = "originalUrl";
     private static final String GET = "GET";
     private static final String ROOT = "/";
     public static final String USER = "socialUser";
