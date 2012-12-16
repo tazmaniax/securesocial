@@ -56,7 +56,9 @@ public class GoogleProvider extends OpenIDOAuthHybridProvider {
     @Override
     protected void fillProfile(SocialUser user, Map<String, Object> authContext) {
         OpenID.UserInfo info = (OpenID.UserInfo) authContext.get(OpenIDProvider.USER_INFO);
-        user.displayName = FoursquareProvider.fullName(info.extensions.get(FIRST_NAME),info.extensions.get(LAST_NAME));
+        user.firstName = info.extensions.get(FIRST_NAME);
+        user.lastName = info.extensions.get(LAST_NAME);
+        user.displayName = FoursquareProvider.fullName(user.firstName, user.lastName);
         user.email = info.extensions.get(EMAIL);
 
         WS.HttpResponse response = WS.url(SELF_API).oauth(user.serviceInfo, user.token, user.secret).get();

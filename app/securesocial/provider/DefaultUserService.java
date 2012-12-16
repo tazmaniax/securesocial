@@ -17,6 +17,7 @@
 package securesocial.provider;
 
 import play.libs.Codec;
+import play.libs.Crypto;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,4 +77,8 @@ public class DefaultUserService implements UserService.Service {
     public void onLogout() {
         // Do nothing.
     }
+
+	public boolean isPasswordMatch(String password, String userPassword) {
+		return Crypto.passwordHash(password).equals(userPassword);
+	}
 }

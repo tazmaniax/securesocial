@@ -46,6 +46,13 @@ public class UserService {
          * @param user A SocialUser object
          */
         void save(SocialUser user);
+        
+        /**
+         * @param password
+         * @param userPassword
+         * @return
+         */
+        boolean isPasswordMatch(String password, String userPassword);
 
         /**
          * Creates an activation request.  This is needed for users that
@@ -73,7 +80,6 @@ public class UserService {
          * store for the user. 
          */
         void deletePendingActivations();
-        
         
         /**
          * This method is called on login before the view is rendered. This method can be used to setup
@@ -109,12 +115,25 @@ public class UserService {
         return service.find(id);
     }
 
+    /**
+     * 
+     */
     private static void checkIsInitialized() {
         if( service == null ) {
             throw new RuntimeException("UserService was not properly initialized.");
         }
     }
-
+    
+    /**
+     * @param password
+     * @param userPassword
+     * @return
+     */
+    public static boolean isPasswordMatch(String password, String userPassword) {
+    	checkIsInitialized();
+    	return service.isPasswordMatch(password, userPassword);
+    }
+    
     /**
      * @see securesocial.provider.UserService.Service#save(SocialUser)
      *

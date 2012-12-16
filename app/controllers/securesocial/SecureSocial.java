@@ -15,15 +15,24 @@
 */
 package controllers.securesocial;
 
+import java.util.Collection;
+
 import play.Logger;
 import play.Play;
 import play.i18n.Messages;
 import play.libs.OAuth;
 import play.mvc.Before;
 import play.mvc.Controller;
-import securesocial.provider.*;
-
-import java.util.Collection;
+import play.mvc.Util;
+import securesocial.provider.AuthenticationMethod;
+import securesocial.provider.IdentityProvider;
+import securesocial.provider.OAuth1Provider;
+import securesocial.provider.OpenIDOAuthHybridProvider;
+import securesocial.provider.ProviderRegistry;
+import securesocial.provider.ProviderType;
+import securesocial.provider.SocialUser;
+import securesocial.provider.UserId;
+import securesocial.provider.UserService;
 
 /**
  * This is the main controller for the SecureSocial module.
@@ -36,7 +45,7 @@ public class SecureSocial extends Controller {
     private static final String ORIGINAL_URL = "originalUrl";
     private static final String GET = "GET";
     private static final String ROOT = "/";
-    static final String USER = "user";
+    public static final String USER = "socialUser";
     private static final String ERROR = "error";
     private static final String SECURESOCIAL_AUTH_ERROR = "securesocial.authError";
     private static final String SECURESOCIAL_LOGOUT_REDIRECT = "securesocial.logout.redirect";
@@ -46,17 +55,17 @@ public class SecureSocial extends Controller {
      * Checks if there is a user logged in and redirects to the login page if not.
      */
     @Before(unless={"login", "authenticate", "logout"})
-    static void checkAccess() throws Throwable
-    {
+    static void checkAccess() throws Throwable {
+    	final String originalUrl = request.method.equals(GET) ? request.url : ROOT;
+        flash.put(ORIGINAL_URL, originalUrl);
+    	
         final UserId userId = getUserId();
 
-        if ( userId == null ) {
-            final String originalUrl = request.method.equals(GET) ? request.url : ROOT;
-            flash.put(ORIGINAL_URL, originalUrl);
+        if (userId == null) {
             login();
         } else {
             final SocialUser user = loadCurrentUser(userId);
-            if ( user == null ) {
+            if (user == null) {
                // the user had the cookies but the UserService can't find it ...
                // it must have been erased, redirect to login again.
                clearUserId();
@@ -65,12 +74,19 @@ public class SecureSocial extends Controller {
         }
     }
 
+    /**
+     * @return
+     */
     static SocialUser loadCurrentUser() {
         UserId id = getUserId();
         final SocialUser user = id != null ? loadCurrentUser(id) : null;
         return user;
     }
     
+    /**
+     * @param userId
+     * @return
+     */
     private static SocialUser loadCurrentUser(UserId userId) {
         SocialUser user = UserService.find(userId);
 
@@ -100,14 +116,19 @@ public class SecureSocial extends Controller {
      * @return SocialUser the current user or null if no user is logged in.
      */
     public static SocialUser getCurrentUser() {
-        // first, try to get it from the renderArgs since it should be there on secured controllers.
-        SocialUser currentUser =  (SocialUser) renderArgs.get(USER);
-
-        if ( currentUser == null  ) {
-            // the call is being made from an unsecured controller
-            // try to provide a current user if there is one in the session
-            currentUser = loadCurrentUser();
-        }
+    	SocialUser currentUser = null;
+    	
+    	if (renderArgs != null) {
+	        // first, try to get it from the renderArgs since it should be there on secured controllers.
+	        currentUser =  (SocialUser) renderArgs.get(USER);
+	        
+	        if (currentUser == null) {
+	            // the call is being made from an unsecured controller
+	            // try to provide a current user if there is one in the session
+	            currentUser = loadCurrentUser();
+	        }
+	    }
+    	
         return currentUser;
     }
 
@@ -122,7 +143,8 @@ public class SecureSocial extends Controller {
     /*
      * Removes the SecureSocial cookies from the session.
      */
-    private static void clearUserId() {
+    @Util
+    public static void clearUserId() {
         session.remove(USER_COOKIE);
         session.remove(NETWORK_COOKIE);
     }
@@ -130,7 +152,8 @@ public class SecureSocial extends Controller {
     /*
      * Sets the SecureSocial cookies in the session.
      */
-    private static void setUserId(SocialUser user) {
+    @Util
+    public static void setUserId(SocialUser user) {
         session.put(USER_COOKIE, user.id.id);
         session.put(NETWORK_COOKIE, user.id.provider.toString());
     }
@@ -159,7 +182,7 @@ public class SecureSocial extends Controller {
      * The action for the login page.
      */
     public static void login() {
-        final Collection providers = ProviderRegistry.all();
+        final Collection<IdentityProvider> providers = ProviderRegistry.all();
         flash.keep(ORIGINAL_URL);
         UserService.onLogin();
         boolean userPassEnabled = ProviderRegistry.get(ProviderType.userpass) != null;
@@ -200,14 +223,21 @@ public class SecureSocial extends Controller {
             SocialUser user = provider.authenticate();
             setUserId(user);
             originalUrl = flash.get(ORIGINAL_URL);
-        } catch ( Exception e ) {
+        } catch (Exception e ) {
             e.printStackTrace();
-            Logger.error(e, "Error authenticating user");
-            if ( flash.get(ERROR) == null ) {
+
+            if (flash.get(ERROR) == null ) {
                 flash.error(Messages.get(SECURESOCIAL_AUTH_ERROR));
             }
-            flash.keep(ORIGINAL_URL); 
-            login();
+            
+            Logger.error(e, "Error authenticating user for %s", flash.get(ERROR));
+            if (request.isAjax()) {
+            	badRequest(/* flash.get(ERROR) */);
+            	flash.clear();
+            } else {
+	            flash.keep(ORIGINAL_URL); 
+	            login();
+            }
         }
         redirect( originalUrl != null ? originalUrl : ROOT);
     }
