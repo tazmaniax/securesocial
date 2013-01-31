@@ -71,18 +71,22 @@ public class UsernamePasswordProvider extends IdentityProvider {
 
 		if (user == null) {
 			flash.error(Messages.get(SECURESOCIAL_BAD_USER_PASSWORD_COMBINATION));
+			Scope.Flash.current().put(USER_NAME, userName);
 			throw new AuthenticationException();
 		}
 
 		if (!user.isEmailVerified) {
 			flash.error(Messages.get(SECURESOCIAL_ACCOUNT_NOT_ACTIVE));
+			Scope.Flash.current().put(USER_NAME, userName);
 			throw new AuthenticationException();
 		}
 
 		if (user == null || !passwordMatches(Scope.Params.current().get(PASSWORD), user.password)) {
 			flash.error(Messages.get(SECURESOCIAL_WRONG_USER_PASS));
+			Scope.Flash.current().put(USER_NAME, userName);
 			throw new AuthenticationException();
 		}
+		
 		return user;
 	}
 
