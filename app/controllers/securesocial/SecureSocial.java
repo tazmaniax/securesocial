@@ -236,11 +236,12 @@ public class SecureSocial extends Controller {
         } catch (Exception e ) {
             e.printStackTrace();
 
-            if (flash.get(ERROR) == null ) {
+            if (flash.get(ERROR) == null) {
                 flash.error(Messages.get(SECURESOCIAL_AUTH_ERROR));
             }
             
-            Logger.error(e, "Error authenticating user for %s", flash.get(ERROR));
+            Logger.info(e, "Error authenticating user for %s", flash.get(ERROR));
+            
             if (request.isAjax()) {
             	badRequest(/* flash.get(ERROR) */);
             	flash.clear();
