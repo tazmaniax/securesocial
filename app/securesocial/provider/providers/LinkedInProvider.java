@@ -57,7 +57,9 @@ public class LinkedInProvider extends OAuth1Provider
             throw new AuthenticationException();
         }
         user.id.id = me.get(ID).getAsString();
-        user.displayName = FoursquareProvider.fullName(me.get(FIRST_NAME).getAsString(),me.get(LAST_NAME).getAsString());
+        user.firstName = me.get(FIRST_NAME).getAsString();
+        user.lastName = me.get(LAST_NAME).getAsString();
+        user.displayName = FoursquareProvider.fullName(user.firstName, user.lastName);
         JsonElement picture = me.get(PICTURE_URL);
         if(picture != null) {
             user.avatarUrl = picture.getAsString();

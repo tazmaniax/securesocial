@@ -70,9 +70,11 @@ public class FoursquareProvider extends OAuth2Provider {
         }
 
         user.id.id = userInfo.get(ID).getAsString();
-        user.displayName = userInfo.get(FIRST_NAME).getAsString();
+        user.firstName = userInfo.get(FIRST_NAME).getAsString();
+        user.displayName = user.firstName;
         final JsonElement lastName = userInfo.get(LAST_NAME);
-        if ( lastName != null ) {
+        if (lastName != null) {
+        	user.lastName = lastName.getAsString();
             user.displayName = fullName(user.displayName, lastName.getAsString());
         }
         user.avatarUrl = userInfo.get(PHOTO).getAsString();

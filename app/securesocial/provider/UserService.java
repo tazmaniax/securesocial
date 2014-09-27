@@ -51,12 +51,25 @@ public class UserService {
         return service.find(email);
     }
 
+    /**
+     * 
+     */
     private static void checkIsInitialized() {
         if (service == null) {
             throw new RuntimeException("UserService was not properly initialized.");
         }
     }
-
+    
+    /**
+     * @param password
+     * @param userPassword
+     * @return
+     */
+    public static boolean isPasswordMatch(String password, String userPassword) {
+    	checkIsInitialized();
+    	return service.isPasswordMatch(password, userPassword);
+    }
+    
     /**
      * @see UserServiceDelegate#save(SocialUser)
      */
@@ -96,7 +109,6 @@ public class UserService {
         checkIsInitialized();
         return service.fetchForPasswordReset(user, uuid);
     }
-
 
     /**
      * @see UserServiceDelegate#disableResetCode(String, String)

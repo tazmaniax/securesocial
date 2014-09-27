@@ -75,7 +75,6 @@ public interface UserServiceDelegate {
      */
     void disableResetCode(String username, String uuid);
 
-
     /**
      * This method deletes activations that were not completed by the user (The user did not follow the link
      * in the welcome email).
@@ -84,4 +83,12 @@ public interface UserServiceDelegate {
      * store for the user.
      */
     void deletePendingActivations();
+    
+    /**
+     * This method performs the actual password match
+     * @param password the entered password
+     * @param userPassword the password value from the retrieved user record
+     * @return
+     */
+    boolean isPasswordMatch(String password, String userPassword);
 }
