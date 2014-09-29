@@ -91,4 +91,16 @@ public interface UserServiceDelegate {
      * @return
      */
     boolean isPasswordMatch(String password, String userPassword);
+    
+    /**
+     * This method is called on login before the view is rendered. This method can be used to setup
+     * the original URL that is redirected to on success.
+     */
+    void onLogin();
+
+    /**
+     * This method is called on logout. This method can be used to redirect to specific location
+     * instead of the default.
+     */
+    void onLogout();
 }

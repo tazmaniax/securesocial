@@ -125,4 +125,22 @@ public class UserService {
         checkIsInitialized();
         service.deletePendingActivations();
     }
+    
+    /**
+     * @see securesocial.provider.UserService.Service#onLogin()
+     * 
+     */
+    public static void onLogin() {
+        checkIsInitialized();
+        service.onLogin();
+    }
+    
+    /**
+     * @see securesocial.provider.UserService.Service#onLogin()
+     * 
+     */
+    public static void onLogout() {
+        checkIsInitialized();
+        service.onLogout();
+    }
 }

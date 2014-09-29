@@ -114,4 +114,14 @@ public class DefaultUserService implements UserServiceDelegate {
 	public boolean isPasswordMatch(String password, String userPassword) {
 		return SecureSocialPasswordHasher.verifyPasswordHash(password, userPassword);
 	}
+	
+	@Override
+    public void onLogin() {
+        // Do nothing.
+    }
+    
+	@Override
+    public void onLogout() {
+        // Do nothing.
+    }
 }
